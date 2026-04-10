@@ -104,9 +104,9 @@ public class WebServer {
             path = "/index.html";
         }
 
-        File file = new File("web" + path); // ✅ FIX
+        File file = new File("web" + path);
 
-        System.out.println("Trying to load: " + file.getAbsolutePath()); // debug
+        System.out.println("Trying to load: " + file.getAbsolutePath());
 
         if (!file.exists()) {
             String response = "404 Not Found";
@@ -115,6 +115,21 @@ public class WebServer {
             exchange.close();
             return;
         }
+
+        // ✅ MIME TYPE FIX
+        String contentType = "text/html";
+
+        if (path.endsWith(".css")) {
+            contentType = "text/css";
+        } else if (path.endsWith(".js")) {
+            contentType = "application/javascript";
+        } else if (path.endsWith(".png")) {
+            contentType = "image/png";
+        } else if (path.endsWith(".jpg")) {
+            contentType = "image/jpeg";
+        }
+
+        exchange.getResponseHeaders().set("Content-Type", contentType);
 
         byte[] bytes = new FileInputStream(file).readAllBytes();
 
