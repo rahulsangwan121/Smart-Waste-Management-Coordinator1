@@ -2,9 +2,9 @@ FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
-# ✅ Correct paths (IMPORTANT)
+# ✅ Correct paths
 COPY src ./src
-COPY src/web ./web   # 🔥 YE LINE FIX HAI
+COPY src/web ./web
 COPY *.txt ./
 
 RUN mkdir -p bin
