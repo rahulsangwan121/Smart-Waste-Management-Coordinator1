@@ -1,9 +1,6 @@
 package com.waste.service;
 
-import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-
+import com.sun.net.httpserver.*;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -15,54 +12,46 @@ public class WebServer {
     public void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
+        // API routes
         server.createContext("/api/bins", new BinHandler());
         server.createContext("/api/add", new AddHandler());
         server.createContext("/api/delete", new DeleteHandler());
         server.createContext("/api/reset", new ResetHandler());
         server.createContext("/api/transit", new TransitHandler());
 
+        // ✅ Static handler (IMPORTANT)
         server.createContext("/", new StaticHandler());
 
         server.setExecutor(null);
         server.start();
-
-        System.out.println("Server started on port 8080");
     }
 
-    // ✅ GET BINS
+    // ---------------- API HANDLERS ----------------
+
     class BinHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             List<String> bins = fileService.readBins();
-
             String response = String.join(";", bins);
-
             sendResponse(exchange, response);
         }
     }
 
-    // ✅ ADD BIN
     class AddHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             String body = readBody(exchange);
-
             fileService.saveBin(body);
-
             sendResponse(exchange, "Added");
         }
     }
 
-    // ✅ DELETE BIN
     class DeleteHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             String id = readBody(exchange);
-
             fileService.deleteBin(id);
-
             sendResponse(exchange, "Deleted");
         }
     }
 
-    // ✅ RESET BIN (mark empty)
     class ResetHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             String id = readBody(exchange);
@@ -72,7 +61,6 @@ public class WebServer {
 
             for (String line : bins) {
                 String[] parts = line.split(",");
-
                 if (parts[0].equals(id)) {
                     updated.add(parts[0] + "," + parts[1] + ",0,1");
                 } else {
@@ -81,12 +69,10 @@ public class WebServer {
             }
 
             fileService.updateAllBins(updated);
-
             sendResponse(exchange, "Reset Done");
         }
     }
 
-    // ✅ TRANSIT (driver assigned)
     class TransitHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             String id = readBody(exchange);
@@ -96,7 +82,6 @@ public class WebServer {
 
             for (String line : bins) {
                 String[] parts = line.split(",");
-
                 if (parts[0].equals(id)) {
                     updated.add(parts[0] + "," + parts[1] + "," + parts[2] + ",2");
                 } else {
@@ -105,12 +90,40 @@ public class WebServer {
             }
 
             fileService.updateAllBins(updated);
-
             sendResponse(exchange, "Driver Assigned");
         }
     }
 
-    // 🔧 COMMON METHODS
+    // ---------------- STATIC HANDLER (🔥 FIX) ----------------
+
+    class StaticHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            String path = exchange.getRequestURI().getPath();
+
+            if (path.equals("/")) {
+                path = "/index.html";
+            }
+
+            File file = new File("web" + path);
+
+            if (!file.exists()) {
+                String response = "404 Not Found";
+                exchange.sendResponseHeaders(404, response.length());
+                exchange.getResponseBody().write(response.getBytes());
+                exchange.close();
+                return;
+            }
+
+            byte[] bytes = new FileInputStream(file).readAllBytes();
+
+            exchange.sendResponseHeaders(200, bytes.length);
+            OutputStream os = exchange.getResponseBody();
+            os.write(bytes);
+            os.close();
+        }
+    }
+
+    // ---------------- COMMON METHODS ----------------
 
     private String readBody(HttpExchange exchange) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
@@ -118,8 +131,7 @@ public class WebServer {
     }
 
     private void sendResponse(HttpExchange exchange, String response) throws IOException {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*"); // CORS fix
-
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.sendResponseHeaders(200, response.length());
 
         OutputStream os = exchange.getResponseBody();
