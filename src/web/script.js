@@ -1,9 +1,7 @@
-// --- BASE URL CHANGE ---
 const API_BASE = "https://smart-waste-management-coordinator1.onrender.com";
 
 async function loadDustbins() {
     try {
-        // Localhost ko API_BASE se replace kar diya
         const response = await fetch(`${API_BASE}/api/bins`);
         const data = await response.text();
         const binListDiv = document.getElementById('bin-list');
@@ -18,7 +16,8 @@ async function loadDustbins() {
 
         bins.forEach(bin => {
             const parts = bin.split(',');
-            if (parts.length >= 3) {
+            if (parts.length >= 3 && parts[0]) {
+
                 const level = parseInt(parts[2]);
                 const statusFlag = parts[3] || "1";
 
@@ -38,27 +37,39 @@ async function loadDustbins() {
                 }
 
                 html += `<tr class="${rowClass}">
-                            <td>${parts[0]}</td><td>${parts[1]}</td><td>${level}%</td>
-                            <td>${statusText}</td><td>${actionBtn}</td>
-                         </tr>`;
+                    <td>${parts[0]}</td>
+                    <td>${parts[1]}</td>
+                    <td>${level}%</td>
+                    <td>${statusText}</td>
+                    <td>
+                        ${actionBtn}
+                        <button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>
+                    </td>
+                </tr>`;
             }
         });
+
         binListDiv.innerHTML = html + "</table>";
-    } catch (e) { 
-        console.log("Server not reachable at: " + API_BASE); 
+    } catch (e) {
+        console.log("Server not reachable");
     }
 }
 
 async function setTransit(id) {
-    // API_BASE use kiya
     await fetch(`${API_BASE}/api/transit`, { method: 'POST', body: id });
     loadDustbins();
 }
 
 async function resetBin(id) {
     if(confirm("Confirm Pickup?")) {
-        // API_BASE use kiya
         await fetch(`${API_BASE}/api/reset`, { method: 'POST', body: id });
+        loadDustbins();
+    }
+}
+
+async function deleteBin(id) {
+    if(confirm("Delete this bin?")) {
+        await fetch(`${API_BASE}/api/delete`, { method: 'POST', body: id });
         loadDustbins();
     }
 }
@@ -67,9 +78,15 @@ async function addBin() {
     const id = document.getElementById('binID').value;
     const loc = document.getElementById('location').value;
     const level = document.getElementById('fillLevel').value;
-    if(level < 0 || level > 100) return alert("Invalid level");
 
-    // API_BASE use kiya
+    if (!id || !loc || level === "") {
+        return alert("All fields required!");
+    }
+
+    if(level < 0 || level > 100) {
+        return alert("Invalid level");
+    }
+
     await fetch(`${API_BASE}/api/add`, { method: 'POST', body: `${id},${loc},${level},1` });
     loadDustbins();
 }
