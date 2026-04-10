@@ -10,7 +10,8 @@ COPY . .
 # 4. Bin folder banakar compile karein
 RUN mkdir -p bin
 # 'Main.java' root par hai aur 'src' folder bhi root par hai
-RUN javac -d bin Main.java src/com/waste/service/*.java src/com/waste/models/*.java
+
+RUN javac -d bin *.java src/com/waste/service/*.java src/com/waste/models/*.java
 
 # 5. Port define karein
 EXPOSE 8080
