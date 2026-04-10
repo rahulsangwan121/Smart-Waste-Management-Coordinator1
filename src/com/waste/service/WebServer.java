@@ -96,7 +96,7 @@ public class WebServer {
 
     // ---------------- STATIC HANDLER (🔥 FIX) ----------------
 
-    class StaticHandler implements HttpHandler {
+ class StaticHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String path = exchange.getRequestURI().getPath();
 
@@ -104,7 +104,9 @@ public class WebServer {
             path = "/index.html";
         }
 
-        File file = new File("." + path); // ✅ FIX
+        File file = new File("web" + path); // ✅ FIX
+
+        System.out.println("Trying to load: " + file.getAbsolutePath()); // debug
 
         if (!file.exists()) {
             String response = "404 Not Found";
