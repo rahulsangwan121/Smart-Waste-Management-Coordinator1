@@ -2,17 +2,13 @@ FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
-# ✅ Correct paths
-COPY web ./web
+# ✅ Correct paths (IMPORTANT)
 COPY src ./src
+COPY src/web ./web   # 🔥 YE LINE FIX HAI
 COPY *.txt ./
-
-# ❗ Main.java src ke andar hai
-# isliye alag copy ki zarurat nahi
 
 RUN mkdir -p bin
 
-# ✅ Correct compile command
 RUN javac -d bin src/Main.java src/com/waste/service/*.java src/com/waste/models/*.java
 
 EXPOSE 8080
