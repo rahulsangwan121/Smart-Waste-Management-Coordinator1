@@ -2,130 +2,126 @@ package com.waste.service;
 
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.*;
 
 public class WebServer {
-    public static void startServer() throws IOException {
-        // Render ka dynamic port setup
-        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
-        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
-        // 1. GET ALL BINS
-        server.createContext("/api/bins", (exchange -> {
-            addCorsHeaders(exchange);
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-            FileService fs = new FileService();
-            List<String> bins = fs.readBins();
-            String response = String.join(";", bins);
-            exchange.sendResponseHeaders(200, response.length());
-            OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        }));
+    private FileService fileService = new FileService();
 
-        // 2. ADD NEW BIN
-        server.createContext("/api/add", (exchange -> {
-            addCorsHeaders(exchange);
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                String data = new String(exchange.getRequestBody().readAllBytes());
-                new FileService().saveBin(data);
-                exchange.sendResponseHeaders(200, 0);
-            }
-            exchange.close();
-        }));
+    public void startServer() throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
-        // 3. SET IN-TRANSIT
-        server.createContext("/api/transit", (exchange -> {
-            addCorsHeaders(exchange);
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                String binID = new String(exchange.getRequestBody().readAllBytes()).trim();
-                updateStatus(binID, false);
-                exchange.sendResponseHeaders(200, 0);
-            }
-            exchange.close();
-        }));
+        server.createContext("/api/bins", new BinHandler());
+        server.createContext("/api/add", new AddHandler());
+        server.createContext("/api/delete", new DeleteHandler());
+        server.createContext("/api/reset", new ResetHandler());
+        server.createContext("/api/transit", new TransitHandler());
 
-        // 4. RESET BIN
-        server.createContext("/api/reset", (exchange -> {
-            addCorsHeaders(exchange);
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                String binID = new String(exchange.getRequestBody().readAllBytes()).trim();
-                updateStatus(binID, true);
-                exchange.sendResponseHeaders(200, 0);
-            }
-            exchange.close();
-        }));
-
-        // --- STATIC FILE SERVER CONTEXT ---
-        server.createContext("/web", (exchange -> {
-            String path = exchange.getRequestURI().getPath();
-            if (path.equals("/web") || path.equals("/web/")) {
-                path = "/web/index.html";
-            }
-
-            // DHAYAN DEIN: Yahan hum "./src" use kar rahe hain kyunki aapka folder src/web hai
-            File file = new File("./src" + path); 
-            
-            if (file.exists() && !file.isDirectory()) {
-                byte[] content = new FileInputStream(file).readAllBytes();
-                
-                if (path.endsWith(".html")) exchange.getResponseHeaders().add("Content-Type", "text/html");
-                else if (path.endsWith(".css")) exchange.getResponseHeaders().add("Content-Type", "text/css");
-                else if (path.endsWith(".js")) exchange.getResponseHeaders().add("Content-Type", "application/javascript");
-
-                exchange.sendResponseHeaders(200, content.length);
-                OutputStream os = exchange.getResponseBody();
-                os.write(content);
-                os.close();
-            } else {
-                String error = "File Not Found at: " + file.getAbsolutePath();
-                exchange.sendResponseHeaders(404, error.length());
-                OutputStream os = exchange.getResponseBody();
-                os.write(error.getBytes());
-                os.close();
-            }
-        }));
-
-        System.out.println("Java Server started on port: " + port);
+        server.setExecutor(null);
         server.start();
+
+        System.out.println("Server started on port 8080");
     }
 
-    private static void addCorsHeaders(HttpExchange exchange) {
-        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
-    }
+    // ✅ GET BINS
+    class BinHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            List<String> bins = fileService.readBins();
 
-    private static void updateStatus(String binID, boolean isReset) {
-        FileService fs = new FileService();
-        List<String> bins = fs.readBins();
-        List<String> updated = new ArrayList<>();
-        for (String line : bins) {
-            String[] p = line.split(",");
-            if (p[0].equals(binID)) {
-                if (isReset) updated.add(p[0] + "," + p[1] + ",0,1");
-                else updated.add(p[0] + "," + p[1] + "," + p[2] + ",2");
-            } else {
-                updated.add(line);
-            }
+            String response = String.join(";", bins);
+
+            sendResponse(exchange, response);
         }
-        fs.updateAllBins(updated);
+    }
+
+    // ✅ ADD BIN
+    class AddHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            String body = readBody(exchange);
+
+            fileService.saveBin(body);
+
+            sendResponse(exchange, "Added");
+        }
+    }
+
+    // ✅ DELETE BIN
+    class DeleteHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            String id = readBody(exchange);
+
+            fileService.deleteBin(id);
+
+            sendResponse(exchange, "Deleted");
+        }
+    }
+
+    // ✅ RESET BIN (mark empty)
+    class ResetHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            String id = readBody(exchange);
+
+            List<String> bins = fileService.readBins();
+            List<String> updated = new ArrayList<>();
+
+            for (String line : bins) {
+                String[] parts = line.split(",");
+
+                if (parts[0].equals(id)) {
+                    updated.add(parts[0] + "," + parts[1] + ",0,1");
+                } else {
+                    updated.add(line);
+                }
+            }
+
+            fileService.updateAllBins(updated);
+
+            sendResponse(exchange, "Reset Done");
+        }
+    }
+
+    // ✅ TRANSIT (driver assigned)
+    class TransitHandler implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            String id = readBody(exchange);
+
+            List<String> bins = fileService.readBins();
+            List<String> updated = new ArrayList<>();
+
+            for (String line : bins) {
+                String[] parts = line.split(",");
+
+                if (parts[0].equals(id)) {
+                    updated.add(parts[0] + "," + parts[1] + "," + parts[2] + ",2");
+                } else {
+                    updated.add(line);
+                }
+            }
+
+            fileService.updateAllBins(updated);
+
+            sendResponse(exchange, "Driver Assigned");
+        }
+    }
+
+    // 🔧 COMMON METHODS
+
+    private String readBody(HttpExchange exchange) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(exchange.getRequestBody()));
+        return reader.readLine();
+    }
+
+    private void sendResponse(HttpExchange exchange, String response) throws IOException {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*"); // CORS fix
+
+        exchange.sendResponseHeaders(200, response.length());
+
+        OutputStream os = exchange.getResponseBody();
+        os.write(response.getBytes());
+        os.close();
     }
 }
