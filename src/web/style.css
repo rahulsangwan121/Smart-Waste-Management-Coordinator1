@@ -52,3 +52,8 @@ button { cursor: pointer; border: none; padding: 6px 12px; border-radius: 4px; f
     border-radius: 5px;
     cursor: pointer;
 }
+.delete-btn {
+    background: #d32f2f;
+    color: white;
+    margin-left: 5px;
+}
