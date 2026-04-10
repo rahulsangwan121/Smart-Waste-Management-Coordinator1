@@ -1,147 +1,78 @@
+// --- BASE URL CHANGE ---
 const API_BASE = "https://smart-waste-management-coordinator1.onrender.com";
-const currentUser = localStorage.getItem("currentUser") || "Guest";
 
-// 1. Dashboard par Bins load karne ka function
-// async function fetchBins() {
-//     try {
-//         const res = await fetch(`${API_BASE}/api/bins`);
-//         const data = await res.text();
-//         const bins = data.split(";");
-//         const tableBody = document.getElementById("binTableBody");
-        
-//         if (!tableBody) return;
-//         tableBody.innerHTML = "";
-
-//         bins.forEach(line => {
-//             if (!line.trim()) return;
-//             const [id, loc, level, status, assignedDriver] = line.split(",");
-            
-//             let actionHTML = "";
-//             if (status === "1") { 
-//                 actionHTML = `<button class="btn-transit" onclick="startTransit('${id}')">I am going</button>`;
-//             } else if (status === "2") { 
-//                 if (assignedDriver === currentUser) {
-//                     actionHTML = `<button class="btn-done" onclick="markDone('${id}')">Mark Done</button>`;
-//                 } else {
-//                     actionHTML = `<span class="badge-processing">Processing...</span>`;
-//                 }
-//             } else { 
-//                 actionHTML = `<span class="badge-empty">Cleaned</span>`;
-//             }
-
-//             tableBody.innerHTML += `
-//                 <tr>
-//                     <td><strong>#${id}</strong></td>
-//                     <td>${loc}</td>
-//                     <td>
-//                         <div style="display:flex; align-items:center; gap:10px;">
-//                             <div style="width:100px; background:#eee; border-radius:5px; height:10px; overflow:hidden;">
-//                                 <div style="width:${level}%; background:${level > 80 ? '#d32f2f' : '#2e7d32'}; height:100%;"></div>
-//                             </div>
-//                             <span>${level}%</span>
-//                         </div>
-//                     </td>
-//                     <td>${actionHTML}</td>
-//                 </tr>`;
-//         });
-//     } catch (err) {
-//         console.error("Fetch Error:", err);
-//     }
-// }
-
-async function fetchBins() {
+async function loadDustbins() {
     try {
-        const res = await fetch(`${API_BASE}/api/bins`);
-        const data = await res.text();
-        
-        const tableBody = document.getElementById("binTableBody");
-        if (!tableBody || !data.trim()) {
-            // Agar data khali hai toh empty message dikhayein
-            tableBody.innerHTML = "<tr><td colspan='4'>No Dustbins Found</td></tr>";
+        // Localhost ko API_BASE se replace kar diya
+        const response = await fetch(`${API_BASE}/api/bins`);
+        const data = await response.text();
+        const binListDiv = document.getElementById('bin-list');
+
+        if (!data.trim()) {
+            binListDiv.innerHTML = "<p>No bins available.</p>";
             return;
         }
 
-        const bins = data.split(";");
-        tableBody.innerHTML = ""; // Purana data saaf karein
+        let html = "<table><tr><th>Bin ID</th><th>Location</th><th>Level</th><th>Status</th><th>Actions</th></tr>";
+        const bins = data.split(';');
 
-        bins.forEach(line => {
-            if (!line.trim()) return;
-            const parts = line.split(",");
-            
-            // Backend format: ID, Loc, Level, Status, Driver
-            const [id, loc, level, status, driver] = parts;
+        bins.forEach(bin => {
+            const parts = bin.split(',');
+            if (parts.length >= 3) {
+                const level = parseInt(parts[2]);
+                const statusFlag = parts[3] || "1";
 
-            tableBody.innerHTML += `
-                <tr>
-                    <td>${id}</td>
-                    <td>${loc}</td>
-                    <td>${level}%</td>
-                    <td>${status === "2" ? "Processing..." : "Active"}</td>
-                </tr>`;
+                let statusText, actionBtn, rowClass = "normal";
+
+                if (level < 80) {
+                    statusText = "✅ OK";
+                    actionBtn = "---";
+                } else if (level >= 80 && statusFlag === "1") {
+                    statusText = "🚨 FULL - Needs Pickup";
+                    rowClass = "critical";
+                    actionBtn = `<button class="go-btn" onclick="setTransit('${parts[0]}')">🏃 I am Going</button>`;
+                } else if (statusFlag === "2") {
+                    statusText = "🚚 Driver is Coming...";
+                    rowClass = "transit";
+                    actionBtn = `<button class="done-btn" onclick="resetBin('${parts[0]}')">✅ Mark Done</button>`;
+                }
+
+                html += `<tr class="${rowClass}">
+                            <td>${parts[0]}</td><td>${parts[1]}</td><td>${level}%</td>
+                            <td>${statusText}</td><td>${actionBtn}</td>
+                         </tr>`;
+            }
         });
-    } catch (err) {
-        console.error("Fetch Error:", err);
+        binListDiv.innerHTML = html + "</table>";
+    } catch (e) { 
+        console.log("Server not reachable at: " + API_BASE); 
     }
 }
 
-// 2. NAYA BIN ADD KARNE KA FUNCTION (Missing Code)
+async function setTransit(id) {
+    // API_BASE use kiya
+    await fetch(`${API_BASE}/api/transit`, { method: 'POST', body: id });
+    loadDustbins();
+}
+
+async function resetBin(id) {
+    if(confirm("Confirm Pickup?")) {
+        // API_BASE use kiya
+        await fetch(`${API_BASE}/api/reset`, { method: 'POST', body: id });
+        loadDustbins();
+    }
+}
+
 async function addBin() {
-    // Screenshot ke hisaab se inputs ki values nikaal rahe hain
-    const idInput = document.querySelectorAll('input')[0]; // Pehla input: Bin ID
-    const locInput = document.querySelectorAll('input')[1]; // Dusra input: Location
-    const levelInput = document.querySelectorAll('input')[2]; // Tisra input: Level
+    const id = document.getElementById('binID').value;
+    const loc = document.getElementById('location').value;
+    const level = document.getElementById('fillLevel').value;
+    if(level < 0 || level > 100) return alert("Invalid level");
 
-    const id = idInput.value;
-    const loc = locInput.value;
-    const level = levelInput.value;
-
-    if(!id || !loc || !level) {
-        alert("Saari details bhariye!");
-        return;
-    }
-
-    // Backend (WebServer.java) Status 0 aur Driver 'None' khud jodd lega
-    const data = `${id},${loc},${level}`;
-
-    try {
-        const response = await fetch(`${API_BASE}/api/add`, {
-            method: "POST",
-            body: data
-        });
-
-        if (response.ok) {
-            alert("Naya Dustbin Add Ho Gaya!");
-            // Inputs clear karein
-            idInput.value = "";
-            locInput.value = "";
-            levelInput.value = "";
-            fetchBins(); // Table refresh karein
-        } else {
-            alert("Server error! Bin add nahi ho paya.");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Connection error!");
-    }
+    // API_BASE use kiya
+    await fetch(`${API_BASE}/api/add`, { method: 'POST', body: `${id},${loc},${level},1` });
+    loadDustbins();
 }
 
-// 3. Status update functions
-async function startTransit(id) {
-    await fetch(`${API_BASE}/api/transit`, {
-        method: "POST",
-        body: `${id},${currentUser}`
-    });
-    fetchBins();
-}
-
-async function markDone(id) {
-    await fetch(`${API_BASE}/api/reset`, {
-        method: "POST",
-        body: id
-    });
-    fetchBins();
-}
-
-// Auto-refresh and Init
-setInterval(fetchBins, 5000);
-window.onload = fetchBins;
+loadDustbins();
+setInterval(loadDustbins, 5000);
