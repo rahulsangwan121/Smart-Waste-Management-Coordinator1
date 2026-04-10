@@ -1,18 +1,24 @@
 package com.waste.service;
 
 import com.sun.net.httpserver.HttpServer;
-import com.waste.service.FileService;
+import com.sun.net.httpserver.HttpExchange;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.*;
 
 public class WebServer {
     public static void startServer() throws IOException {
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        // --- CHANGE 1: Render ke liye dynamic port ---
+        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+        HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
         // 1. GET ALL BINS
         server.createContext("/api/bins", (exchange -> {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            addCorsHeaders(exchange);
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
             FileService fs = new FileService();
             List<String> bins = fs.readBins();
             String response = String.join(";", bins);
@@ -24,7 +30,11 @@ public class WebServer {
 
         // 2. ADD NEW BIN
         server.createContext("/api/add", (exchange -> {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            addCorsHeaders(exchange);
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 String data = new String(exchange.getRequestBody().readAllBytes());
                 new FileService().saveBin(data);
@@ -33,30 +43,45 @@ public class WebServer {
             exchange.close();
         }));
 
-        // 3. SET IN-TRANSIT (Lock Task)
+        // 3. SET IN-TRANSIT
         server.createContext("/api/transit", (exchange -> {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            addCorsHeaders(exchange);
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 String binID = new String(exchange.getRequestBody().readAllBytes()).trim();
-                updateStatus(binID, false); // false = status 2 (Transit)
+                updateStatus(binID, false);
                 exchange.sendResponseHeaders(200, 0);
             }
             exchange.close();
         }));
 
-        // 4. RESET BIN (Task Done)
+        // 4. RESET BIN
         server.createContext("/api/reset", (exchange -> {
-            exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+            addCorsHeaders(exchange);
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 String binID = new String(exchange.getRequestBody().readAllBytes()).trim();
-                updateStatus(binID, true); // true = level 0, status 1
+                updateStatus(binID, true);
                 exchange.sendResponseHeaders(200, 0);
             }
             exchange.close();
         }));
 
-        System.out.println("Java Server started at http://localhost:8080");
+        System.out.println("Java Server started on port: " + port);
         server.start();
+    }
+
+    // --- CHANGE 2: CORS aur OPTIONS handling helper ---
+    private static void addCorsHeaders(HttpExchange exchange) {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
     }
 
     private static void updateStatus(String binID, boolean isReset) {
@@ -66,8 +91,8 @@ public class WebServer {
         for (String line : bins) {
             String[] p = line.split(",");
             if (p[0].equals(binID)) {
-                if (isReset) updated.add(p[0] + "," + p[1] + ",0,1"); // Reset level and status
-                else updated.add(p[0] + "," + p[1] + "," + p[2] + ",2"); // Set transit
+                if (isReset) updated.add(p[0] + "," + p[1] + ",0,1");
+                else updated.add(p[0] + "," + p[1] + "," + p[2] + ",2");
             } else {
                 updated.add(line);
             }
