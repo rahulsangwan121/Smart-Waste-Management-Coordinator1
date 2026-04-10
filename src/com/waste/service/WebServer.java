@@ -97,32 +97,31 @@ public class WebServer {
     // ---------------- STATIC HANDLER (🔥 FIX) ----------------
 
     class StaticHandler implements HttpHandler {
-        public void handle(HttpExchange exchange) throws IOException {
-            String path = exchange.getRequestURI().getPath();
+    public void handle(HttpExchange exchange) throws IOException {
+        String path = exchange.getRequestURI().getPath();
 
-            if (path.equals("/")) {
-                path = "/index.html";
-            }
-
-            File file = new File("web" + path);
-
-            if (!file.exists()) {
-                String response = "404 Not Found";
-                exchange.sendResponseHeaders(404, response.length());
-                exchange.getResponseBody().write(response.getBytes());
-                exchange.close();
-                return;
-            }
-
-            byte[] bytes = new FileInputStream(file).readAllBytes();
-
-            exchange.sendResponseHeaders(200, bytes.length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(bytes);
-            os.close();
+        if (path.equals("/")) {
+            path = "/index.html";
         }
-    }
 
+        File file = new File("." + path); // ✅ FIX
+
+        if (!file.exists()) {
+            String response = "404 Not Found";
+            exchange.sendResponseHeaders(404, response.length());
+            exchange.getResponseBody().write(response.getBytes());
+            exchange.close();
+            return;
+        }
+
+        byte[] bytes = new FileInputStream(file).readAllBytes();
+
+        exchange.sendResponseHeaders(200, bytes.length);
+        OutputStream os = exchange.getResponseBody();
+        os.write(bytes);
+        os.close();
+    }
+}
     // ---------------- COMMON METHODS ----------------
 
     private String readBody(HttpExchange exchange) throws IOException {
