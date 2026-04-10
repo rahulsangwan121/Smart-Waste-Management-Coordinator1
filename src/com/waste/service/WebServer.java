@@ -8,7 +8,6 @@ import java.util.*;
 
 public class WebServer {
     public static void startServer() throws IOException {
-        // Render ka dynamic port setup
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
@@ -28,82 +27,52 @@ public class WebServer {
             os.close();
         }));
 
-        // 2. ADD NEW BIN
-        server.createContext("/api/add", (exchange -> {
-            addCorsHeaders(exchange);
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
-            if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                String data = new String(exchange.getRequestBody().readAllBytes());
-                new FileService().saveBin(data);
-                exchange.sendResponseHeaders(200, 0);
-            }
-            exchange.close();
-        }));
-
-        // 3. SET IN-TRANSIT
+        // 2. SET IN-TRANSIT (With Driver Info)
         server.createContext("/api/transit", (exchange -> {
             addCorsHeaders(exchange);
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
-                String binID = new String(exchange.getRequestBody().readAllBytes()).trim();
-                updateStatus(binID, false);
+                String data = new String(exchange.getRequestBody().readAllBytes()).trim();
+                // Data format: "binID,driverName"
+                String[] parts = data.split(",");
+                if (parts.length == 2) {
+                    updateStatus(parts[0], false, parts[1]);
+                }
                 exchange.sendResponseHeaders(200, 0);
             }
             exchange.close();
         }));
 
-        // 4. RESET BIN
+        // 3. RESET BIN
         server.createContext("/api/reset", (exchange -> {
             addCorsHeaders(exchange);
-            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-                exchange.sendResponseHeaders(204, -1);
-                return;
-            }
             if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                 String binID = new String(exchange.getRequestBody().readAllBytes()).trim();
-                updateStatus(binID, true);
+                updateStatus(binID, true, "None");
                 exchange.sendResponseHeaders(200, 0);
             }
             exchange.close();
         }));
 
-        // --- STATIC FILE SERVER CONTEXT ---
+        // Static File Server (src/web path)
         server.createContext("/web", (exchange -> {
             String path = exchange.getRequestURI().getPath();
-            if (path.equals("/web") || path.equals("/web/")) {
-                path = "/web/index.html";
-            }
-
-            // DHAYAN DEIN: Yahan hum "./src" use kar rahe hain kyunki aapka folder src/web hai
+            if (path.equals("/web") || path.equals("/web/")) path = "/web/index.html";
             File file = new File("./src" + path); 
-            
             if (file.exists() && !file.isDirectory()) {
-                byte[] content = new FileInputStream(file).readAllBytes();
-                
                 if (path.endsWith(".html")) exchange.getResponseHeaders().add("Content-Type", "text/html");
                 else if (path.endsWith(".css")) exchange.getResponseHeaders().add("Content-Type", "text/css");
                 else if (path.endsWith(".js")) exchange.getResponseHeaders().add("Content-Type", "application/javascript");
-
+                byte[] content = new FileInputStream(file).readAllBytes();
                 exchange.sendResponseHeaders(200, content.length);
                 OutputStream os = exchange.getResponseBody();
                 os.write(content);
                 os.close();
             } else {
-                String error = "File Not Found at: " + file.getAbsolutePath();
-                exchange.sendResponseHeaders(404, error.length());
-                OutputStream os = exchange.getResponseBody();
-                os.write(error.getBytes());
-                os.close();
+                exchange.sendResponseHeaders(404, 0);
+                exchange.close();
             }
         }));
 
-        System.out.println("Java Server started on port: " + port);
         server.start();
     }
 
@@ -113,15 +82,15 @@ public class WebServer {
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
     }
 
-    private static void updateStatus(String binID, boolean isReset) {
+    private static void updateStatus(String binID, boolean isReset, String driverName) {
         FileService fs = new FileService();
         List<String> bins = fs.readBins();
         List<String> updated = new ArrayList<>();
         for (String line : bins) {
             String[] p = line.split(",");
             if (p[0].equals(binID)) {
-                if (isReset) updated.add(p[0] + "," + p[1] + ",0,1");
-                else updated.add(p[0] + "," + p[1] + "," + p[2] + ",2");
+                if (isReset) updated.add(p[0] + "," + p[1] + ",0,1,None");
+                else updated.add(p[0] + "," + p[1] + "," + p[2] + ",2," + driverName);
             } else {
                 updated.add(line);
             }
