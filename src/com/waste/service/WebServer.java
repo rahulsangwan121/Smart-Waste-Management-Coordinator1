@@ -21,6 +21,8 @@ public class WebServer {
         server.createContext("/api/reset", new ResetHandler());
         server.createContext("/api/transit", new TransitHandler());
 
+        server.createContext("/", new StaticHandler());
+
         server.setExecutor(null);
         server.start();
 
