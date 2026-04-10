@@ -22,3 +22,33 @@ th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
 button { cursor: pointer; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
 .go-btn { background: #ff9800; color: white; }
 .done-btn { background: #2e7d32; color: white; }
+/* Processing badge ka style */
+.badge-processing {
+    background-color: #ffe082; /* Light Yellow/Orange */
+    color: #856404;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    display: inline-block;
+    border: 1px solid #ffeeba;
+}
+
+/* Button styles for better UI */
+.btn-transit {
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-done {
+    background-color: #1565c0; /* Blue for Complete */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
