@@ -2,9 +2,9 @@ package com.waste.service;
 
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpExchange;
-import java.io.;
+import java.io.*;
 import java.net.InetSocketAddress;
-import java.util.;
+import java.util.*;
 
 public class WebServer {
 public static void startServer() throws IOException {
