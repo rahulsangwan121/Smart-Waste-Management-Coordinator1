@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Waste Management</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        // Agar localStorage mein "true" nahi mila, toh wapas login page par bhej do
+        if (localStorage.getItem("isLoggedIn") !== "true") {
+            window.location.href = "login.html";
+        }
+
+        // Logout karne ke liye function
+        function logout() {
+            localStorage.removeItem("isLoggedIn"); // Nishani mita do
+            window.location.href = "login.html";   // Login page par bhej do
+        }
+    </script>
+</head>
+<body>
+<div class="header">
+    <div style="text-align: right; padding: 10px;">
+        <button onclick="logout()" style="background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            Logout 🚪
+        </button>
+    </div>
+    <h1>Smart Waste Management Coordinator</h1>
+</div>
+<div class="container">
+    <h2>Live Dustbin Status</h2>
+    <div id="bin-list">
+        <p>Loading status from Java backend...</p>
+    </div>
+    <div class="admin-panel">
+        <h3>Add New Dustbin (Admin Only)</h3>
+        <input type="text" id="binID" placeholder="Bin ID (e.g. B102)">
+        <input type="text" id="location" placeholder="Location">
+        <input type="number" id="fillLevel" placeholder="Fill Level %">
+        <button onclick="addBin()">Add Dustbin</button>
+    </div>
+    <hr>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

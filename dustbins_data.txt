@@ -1,0 +1,7 @@
+B101,Malviya Nagar,0
+B102,Raja Park,0
+B103,Gopalpura,0
+B104,NRI,0
+B105,Vivek Vihar,0
+B102,Raja Park,87
+B102,Raja Park,90

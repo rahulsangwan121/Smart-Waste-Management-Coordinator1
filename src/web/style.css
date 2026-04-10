@@ -1,0 +1,24 @@
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 40px; }
+.container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 900px; margin: auto; }
+h1 { color: #2e7d32; text-align: center; }
+table { margin-top: 20px; }
+th { background: #4caf50; color: white; padding: 12px; }
+td { padding: 12px; text-align: center; border-bottom: 1px solid #ddd; }
+.critical {
+    background-color: #ffebee;
+    color: #d32f2f;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 5px;
+    line-height: 1.4; /* Taaki do lines ke beech gap rahe */
+}
+.normal { color: #388e3c; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+.critical { background-color: #ffebee; color: #c62828; font-weight: bold; }
+.transit { background-color: #fff3e0; color: #ef6c00; font-weight: bold; }
+.normal { background-color: #f1f8e9; }
+
+button { cursor: pointer; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; }
+.go-btn { background: #ff9800; color: white; }
+.done-btn { background: #2e7d32; color: white; }
