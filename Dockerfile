@@ -11,7 +11,7 @@ COPY . .
 RUN mkdir -p bin
 # 'Main.java' root par hai aur 'src' folder bhi root par hai
 
-RUN javac -d bin *.java src/com/waste/service/*.java src/com/waste/models/*.java
+RUN javac -d bin Main.java src/Main.java src/com/waste/service/*.java src/com/waste/models/*.java || javac -d bin src/Main.java src/com/waste/service/*.java src/com/waste/models/*.java
 
 # 5. Port define karein
 EXPOSE 8080
