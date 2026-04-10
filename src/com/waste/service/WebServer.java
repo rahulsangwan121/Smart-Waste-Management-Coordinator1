@@ -8,7 +8,7 @@ import java.util.*;
 
 public class WebServer {
     public static void startServer() throws IOException {
-        // --- CHANGE 1: Render ke liye dynamic port ---
+        // Render ka dynamic port setup
         int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
 
@@ -73,42 +73,40 @@ public class WebServer {
             exchange.close();
         }));
 
-        // HTML, JS, CSS files serve karne ke liye naya context
-server.createContext("/web", (exchange -> {
-    String path = exchange.getRequestURI().getPath();
-    // Default file index.html rakhein
-    if (path.equals("/web") || path.equals("/web/")) {
-        path = "/web/index.html";
-    }
+        // --- STATIC FILE SERVER CONTEXT ---
+        server.createContext("/web", (exchange -> {
+            String path = exchange.getRequestURI().getPath();
+            if (path.equals("/web") || path.equals("/web/")) {
+                path = "/web/index.html";
+            }
 
-    // File ko read karein (Root se)
-    File file = new File("." + path); 
-    if (file.exists()) {
-        byte[] content = new FileInputStream(file).readAllBytes();
-        
-        // Content-Type set karein (taaki browser samajh sake ye kya hai)
-        if (path.endsWith(".html")) exchange.getResponseHeaders().add("Content-Type", "text/html");
-        else if (path.endsWith(".css")) exchange.getResponseHeaders().add("Content-Type", "text/css");
-        else if (path.endsWith(".js")) exchange.getResponseHeaders().add("Content-Type", "application/javascript");
+            // DHAYAN DEIN: Yahan hum "./src" use kar rahe hain kyunki aapka folder src/web hai
+            File file = new File("./src" + path); 
+            
+            if (file.exists() && !file.isDirectory()) {
+                byte[] content = new FileInputStream(file).readAllBytes();
+                
+                if (path.endsWith(".html")) exchange.getResponseHeaders().add("Content-Type", "text/html");
+                else if (path.endsWith(".css")) exchange.getResponseHeaders().add("Content-Type", "text/css");
+                else if (path.endsWith(".js")) exchange.getResponseHeaders().add("Content-Type", "application/javascript");
 
-        exchange.sendResponseHeaders(200, content.length);
-        OutputStream os = exchange.getResponseBody();
-        os.write(content);
-        os.close();
-    } else {
-        String error = "File Not Found: " + path;
-        exchange.sendResponseHeaders(404, error.length());
-        OutputStream os = exchange.getResponseBody();
-        os.write(error.getBytes());
-        os.close();
-    }
-}));
+                exchange.sendResponseHeaders(200, content.length);
+                OutputStream os = exchange.getResponseBody();
+                os.write(content);
+                os.close();
+            } else {
+                String error = "File Not Found at: " + file.getAbsolutePath();
+                exchange.sendResponseHeaders(404, error.length());
+                OutputStream os = exchange.getResponseBody();
+                os.write(error.getBytes());
+                os.close();
+            }
+        }));
 
         System.out.println("Java Server started on port: " + port);
         server.start();
     }
 
-    // --- CHANGE 2: CORS aur OPTIONS handling helper ---
     private static void addCorsHeaders(HttpExchange exchange) {
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
