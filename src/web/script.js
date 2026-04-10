@@ -2,46 +2,81 @@ const API_BASE = "https://smart-waste-management-coordinator1.onrender.com";
 const currentUser = localStorage.getItem("currentUser") || "Guest";
 
 // 1. Dashboard par Bins load karne ka function
+// async function fetchBins() {
+//     try {
+//         const res = await fetch(`${API_BASE}/api/bins`);
+//         const data = await res.text();
+//         const bins = data.split(";");
+//         const tableBody = document.getElementById("binTableBody");
+        
+//         if (!tableBody) return;
+//         tableBody.innerHTML = "";
+
+//         bins.forEach(line => {
+//             if (!line.trim()) return;
+//             const [id, loc, level, status, assignedDriver] = line.split(",");
+            
+//             let actionHTML = "";
+//             if (status === "1") { 
+//                 actionHTML = `<button class="btn-transit" onclick="startTransit('${id}')">I am going</button>`;
+//             } else if (status === "2") { 
+//                 if (assignedDriver === currentUser) {
+//                     actionHTML = `<button class="btn-done" onclick="markDone('${id}')">Mark Done</button>`;
+//                 } else {
+//                     actionHTML = `<span class="badge-processing">Processing...</span>`;
+//                 }
+//             } else { 
+//                 actionHTML = `<span class="badge-empty">Cleaned</span>`;
+//             }
+
+//             tableBody.innerHTML += `
+//                 <tr>
+//                     <td><strong>#${id}</strong></td>
+//                     <td>${loc}</td>
+//                     <td>
+//                         <div style="display:flex; align-items:center; gap:10px;">
+//                             <div style="width:100px; background:#eee; border-radius:5px; height:10px; overflow:hidden;">
+//                                 <div style="width:${level}%; background:${level > 80 ? '#d32f2f' : '#2e7d32'}; height:100%;"></div>
+//                             </div>
+//                             <span>${level}%</span>
+//                         </div>
+//                     </td>
+//                     <td>${actionHTML}</td>
+//                 </tr>`;
+//         });
+//     } catch (err) {
+//         console.error("Fetch Error:", err);
+//     }
+// }
+
 async function fetchBins() {
     try {
         const res = await fetch(`${API_BASE}/api/bins`);
         const data = await res.text();
-        const bins = data.split(";");
-        const tableBody = document.getElementById("binTableBody");
         
-        if (!tableBody) return;
-        tableBody.innerHTML = "";
+        const tableBody = document.getElementById("binTableBody");
+        if (!tableBody || !data.trim()) {
+            // Agar data khali hai toh empty message dikhayein
+            tableBody.innerHTML = "<tr><td colspan='4'>No Dustbins Found</td></tr>";
+            return;
+        }
+
+        const bins = data.split(";");
+        tableBody.innerHTML = ""; // Purana data saaf karein
 
         bins.forEach(line => {
             if (!line.trim()) return;
-            const [id, loc, level, status, assignedDriver] = line.split(",");
+            const parts = line.split(",");
             
-            let actionHTML = "";
-            if (status === "1") { 
-                actionHTML = `<button class="btn-transit" onclick="startTransit('${id}')">I am going</button>`;
-            } else if (status === "2") { 
-                if (assignedDriver === currentUser) {
-                    actionHTML = `<button class="btn-done" onclick="markDone('${id}')">Mark Done</button>`;
-                } else {
-                    actionHTML = `<span class="badge-processing">Processing...</span>`;
-                }
-            } else { 
-                actionHTML = `<span class="badge-empty">Cleaned</span>`;
-            }
+            // Backend format: ID, Loc, Level, Status, Driver
+            const [id, loc, level, status, driver] = parts;
 
             tableBody.innerHTML += `
                 <tr>
-                    <td><strong>#${id}</strong></td>
+                    <td>${id}</td>
                     <td>${loc}</td>
-                    <td>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:100px; background:#eee; border-radius:5px; height:10px; overflow:hidden;">
-                                <div style="width:${level}%; background:${level > 80 ? '#d32f2f' : '#2e7d32'}; height:100%;"></div>
-                            </div>
-                            <span>${level}%</span>
-                        </div>
-                    </td>
-                    <td>${actionHTML}</td>
+                    <td>${level}%</td>
+                    <td>${status === "2" ? "Processing..." : "Active"}</td>
                 </tr>`;
         });
     } catch (err) {
