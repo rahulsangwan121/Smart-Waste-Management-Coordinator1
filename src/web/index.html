@@ -5,19 +5,20 @@
     <title>Smart Waste Management</title>
     <link rel="stylesheet" href="style.css">
     <script>
-        // Agar localStorage mein "true" nahi mila, toh wapas login page par bhej do
+        // Auth Check
         if (localStorage.getItem("isLoggedIn") !== "true") {
             window.location.href = "login.html";
         }
 
-        // Logout karne ke liye function
+        // Logout function
         function logout() {
-            localStorage.removeItem("isLoggedIn"); // Nishani mita do
-            window.location.href = "login.html";   // Login page par bhej do
+            localStorage.removeItem("isLoggedIn");
+            window.location.href = "login.html";
         }
     </script>
 </head>
 <body>
+
 <div class="header">
     <div style="text-align: right; padding: 10px;">
         <button onclick="logout()" style="background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">
@@ -26,20 +27,44 @@
     </div>
     <h1>Smart Waste Management Coordinator</h1>
 </div>
+
 <div class="container">
     <h2>Live Dustbin Status</h2>
-    <div id="binTableBody">
-        <p>Loading status from Java backend...</p>
+    
+    <div style="margin-top: 20px; overflow-x: auto;">
+        <table border="1" style="width:100%; border-collapse: collapse; background: white; min-width: 500px;">
+            <thead style="background-color: #4CAF50; color: white;">
+                <tr>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Bin ID</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Location</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Fill Level</th>
+                    <th style="padding: 12px; border: 1px solid #ddd;">Status</th>
+                </tr>
+            </thead>
+            <tbody id="binTableBody">
+                <tr>
+                    <td colspan="4" style="padding: 20px; text-align: center; color: #666;">
+                        Loading status from Java backend...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-    <div class="admin-panel">
+
+    <div class="admin-panel" style="margin-top: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
         <h3>Add New Dustbin (Admin Only)</h3>
-        <input type="text" id="binID" placeholder="Bin ID (e.g. B102)">
-        <input type="text" id="location" placeholder="Location">
-        <input type="number" id="fillLevel" placeholder="Fill Level %">
-        <button onclick="addBin()">Add Dustbin</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="text" id="binID" placeholder="Bin ID (e.g. B102)" style="padding: 10px; flex: 1; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="text" id="location" placeholder="Location" style="padding: 10px; flex: 1; border: 1px solid #ccc; border-radius: 4px;">
+            <input type="number" id="fillLevel" placeholder="Fill Level %" style="padding: 10px; flex: 1; border: 1px solid #ccc; border-radius: 4px;">
+            <button onclick="addBin()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Add Dustbin
+            </button>
+        </div>
     </div>
-    <hr>
+    <hr style="margin-top: 40px; opacity: 0.2;">
 </div>
+
 <script src="script.js"></script>
 </body>
 </html>
