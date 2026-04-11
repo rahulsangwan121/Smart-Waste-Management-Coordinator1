@@ -16,24 +16,43 @@ async function loadDustbins() {
 
         bins.forEach(bin => {
             const parts = bin.split(',');
-            if (parts.length >= 3 && parts[0]) {
 
+            const assignedUser = parts[4] || "";
+            const currentUser = localStorage.getItem("currentUser");
+
+            if (parts.length >= 3 && parts[0]) {
                 const level = parseInt(parts[2]);
                 const statusFlag = parts[3] || "1";
 
-                let statusText, actionBtn, rowClass = "normal";
+                let statusText = "";
+                let actionBtn = "";
+                let rowClass = "normal";
 
                 if (level < 80) {
                     statusText = "✅ OK";
-                    actionBtn = "---";
-                } else if (level >= 80 && statusFlag === "1") {
-                    statusText = "FULL - Needs Pickup";
+                    actionBtn = `<button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>`;
+                }
+                else if (level >= 80 && statusFlag === "1") {
+                    statusText = "🚨 FULL - Needs Pickup";
                     rowClass = "critical";
-                    actionBtn = `<button class="go-btn" onclick="setTransit('${parts[0]}')">Reach to bin</button>`;
-                } else if (statusFlag === "2") {
-                    statusText = "In Progress...";
+                    actionBtn = `
+                        <button class="go-btn" onclick="setTransit('${parts[0]}')">🏃 I am Going</button>
+                        <button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>
+                    `;
+                }
+                else if (statusFlag === "2") {
                     rowClass = "transit";
-                    actionBtn = `<button class="done-btn" onclick="resetBin('${parts[0]}')">✅ Mark Done</button>`;
+
+                    if (assignedUser === currentUser) {
+                        statusText = "🚚 You are assigned";
+                        actionBtn = `
+                            <button class="done-btn" onclick="resetBin('${parts[0]}')">✅ Mark Done</button>
+                            <button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>
+                        `;
+                    } else {
+                        statusText = `🚚 Assigned to ${assignedUser}`;
+                        actionBtn = `🔒 Locked`;
+                    }
                 }
 
                 html += `<tr class="${rowClass}">
@@ -41,25 +60,32 @@ async function loadDustbins() {
                     <td>${parts[1]}</td>
                     <td>${level}%</td>
                     <td>${statusText}</td>
-                    <td>
-                        ${actionBtn}
-                        <button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>
-                    </td>
+                    <td>${actionBtn}</td>
                 </tr>`;
             }
         });
 
         binListDiv.innerHTML = html + "</table>";
     } catch (e) {
-        console.log("Server not reachable");
+        console.log("Server not reachable at: " + API_BASE);
+        document.getElementById('bin-list').innerHTML = "<p>⚠️ Server not reachable.</p>";
     }
 }
 
 async function setTransit(id) {
     const user = localStorage.getItem("currentUser");
 
+    if (!user) {
+        alert("Please login first.");
+        window.location.href = "login.html";
+        return;
+    }
+
     await fetch(`${API_BASE}/api/transit`, {
         method: 'POST',
+        headers: {
+            "Content-Type": "text/plain"
+        },
         body: `${id},${user}`
     });
 
@@ -69,42 +95,71 @@ async function setTransit(id) {
 async function resetBin(id) {
     const user = localStorage.getItem("currentUser");
 
-    const res = await fetch(`${API_BASE}/api/reset`, {
-        method: 'POST',
-        body: `${id},${user}`
-    });
-
-    const result = await res.text();
-
-    if (result === "NOT_ALLOWED") {
-        alert("❌ Only assigned driver can complete this task!");
+    if (!user) {
+        alert("Please login first.");
+        window.location.href = "login.html";
         return;
     }
 
-    loadDustbins();
+    if (confirm("Confirm Pickup?")) {
+        const res = await fetch(`${API_BASE}/api/reset`, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: `${id},${user}`
+        });
+
+        const result = await res.text();
+
+        if (result === "NOT_ALLOWED") {
+            alert("❌ Only assigned driver can complete this task!");
+            return;
+        }
+
+        loadDustbins();
+    }
 }
 
 async function deleteBin(id) {
-    if(confirm("Delete this bin?")) {
-        await fetch(`${API_BASE}/api/delete`, { method: 'POST', body: id });
+    if (confirm("Delete this bin?")) {
+        await fetch(`${API_BASE}/api/delete`, {
+            method: 'POST',
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: id
+        });
+
         loadDustbins();
     }
 }
 
 async function addBin() {
-    const id = document.getElementById('binID').value;
-    const loc = document.getElementById('location').value;
-    const level = document.getElementById('fillLevel').value;
+    const id = document.getElementById('binID').value.trim();
+    const loc = document.getElementById('location').value.trim();
+    const level = document.getElementById('fillLevel').value.trim();
 
     if (!id || !loc || level === "") {
-        return alert("All fields required!");
+        return alert("All fields are required!");
     }
 
-    if(level < 0 || level > 100) {
+    if (level < 0 || level > 100) {
         return alert("Invalid level");
     }
 
-    await fetch(`${API_BASE}/api/add`, { method: 'POST', body: `${id},${loc},${level},1` });
+    await fetch(`${API_BASE}/api/add`, {
+        method: 'POST',
+        headers: {
+            "Content-Type": "text/plain"
+        },
+        body: `${id},${loc},${level},1,`
+    });
+
+    document.getElementById('binID').value = "";
+    document.getElementById('location').value = "";
+    document.getElementById('fillLevel').value = "";
+
     loadDustbins();
 }
 
