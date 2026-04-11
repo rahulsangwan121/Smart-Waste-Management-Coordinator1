@@ -31,7 +31,7 @@ th, td {
 }
 
 th {
-     background: linear-gradient(to right, #1565c0, #42a5f5);
+    background: rgb(91, 91, 254);
     color: white;
 }
 
