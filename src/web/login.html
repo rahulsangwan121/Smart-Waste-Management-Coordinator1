@@ -29,7 +29,7 @@
         margin: 10px 0;
         border: 1px solid #ddd;
         border-radius: 8px;
-        box-sizing: border-box; /* padding fix */
+        box-sizing: border-box; 
     }
     .btn-login {
         width: 100%;
@@ -44,21 +44,20 @@
         transition: 0.3s;
     }
     .btn-login:hover { background: #1b5e20; }
-    .footer-text { margin-top: 15px; font-size: 13px; color: #666; }
   </style>
 </head>
 <body>
 
 <div class="login-card">
-  <h2>Admin Login</h2>
+  <h2>Login</h2>
   <p>Enter your credentials to access the Dashboard</p>
 
-  <input type="text" id="username" placeholder="Username (admin)">
-  <input type="password" id="password" placeholder="Password (123)">
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
 
   <button class="btn-login" onclick="validate()">Login</button>
 
-  <div class="footer-text">Project Head: Sara Din</div>
+ 
 </div>
 
 <script>
@@ -68,7 +67,6 @@
 
     if (user === "admin" && pass === "123") {
         localStorage.setItem("isLoggedIn", "true");
-        // YE LINE ADD KAREIN: User ka naam save karne ke liye
         localStorage.setItem("currentUser", user); 
         window.location.href = "index.html";
     } else {
