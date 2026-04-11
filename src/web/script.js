@@ -30,25 +30,19 @@ async function loadDustbins() {
 
                 if (level < 80) {
                     statusText = "✅ OK";
-                   
+                    actionBtn = "---";
                 }
                 else if (level >= 80 && statusFlag === "1") {
-                    statusText = "FULL - Needs Pickup";
+                    statusText = "🚨 FULL - Needs Pickup";
                     rowClass = "critical";
-                    actionBtn = `
-                        <button class="go-btn" onclick="setTransit('${parts[0]}')">Reach</button>
-                       
-                    `;
+                    actionBtn = `<button class="go-btn" onclick="setTransit('${parts[0]}')">🏃 I am Going</button>`;
                 }
                 else if (statusFlag === "2") {
                     rowClass = "transit";
 
                     if (assignedUser === currentUser) {
-                        statusText = "In Progress...";
-                        actionBtn = `
-                            <button class="done-btn" onclick="resetBin('${parts[0]}')">Mark Done</button>
-                           
-                        `;
+                        statusText = "🚚 You are assigned";
+                        actionBtn = `<button class="done-btn" onclick="resetBin('${parts[0]}')">✅ Mark Done</button>`;
                     } else {
                         statusText = `🚚 Assigned to ${assignedUser}`;
                         actionBtn = `🔒 Locked`;
@@ -120,8 +114,6 @@ async function resetBin(id) {
         loadDustbins();
     }
 }
-
-
 
 async function addBin() {
     const id = document.getElementById('binID').value.trim();
