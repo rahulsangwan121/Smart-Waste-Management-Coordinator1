@@ -44,8 +44,8 @@ async function loadDustbins() {
                         statusText = "In Progress...";
                         actionBtn = `<button class="done-btn" onclick="resetBin('${parts[0]}')">Mark Done</button>`;
                     } else {
-                        statusText = `Assigned`;
-                        actionBtn = `🔒 Locked`;
+                        statusText = `In Progress..`;
+                        actionBtn = `Assigned`;
                     }
                 }
 
