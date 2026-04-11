@@ -81,17 +81,4 @@ public class FileService {
     return users;
 }
     
-    public void deleteBin(String binID) {
-    List<String> allBins = readBins();
-    List<String> updatedBins = new ArrayList<>();
-
-    for (String line : allBins) {
-        String[] parts = line.split(",");
-        if (!parts[0].equals(binID)) {
-            updatedBins.add(line);
-        }
-    }
-
-    updateAllBins(updatedBins);
-}
-}
+   
