@@ -32,18 +32,30 @@ public class WebServer {
     class LoginHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         String body = readBody(exchange);
+
+        // 🔥 DEBUG PRINT
+        System.out.println("Received from frontend: " + body);
+
         String[] parts = body.split(",");
+        String username = parts[0];
+        String password = parts[1];
 
-        String user = parts[0];
-        String pass = parts[1];
+        System.out.println("Username: " + username);
+        System.out.println("Password: " + password);
 
-        UserService userService = new UserService();
+        List<String> users = readUsers(); // tumhara method
 
-        if (userService.validateUser(user, pass)) {
-            sendResponse(exchange, "SUCCESS");
-        } else {
-            sendResponse(exchange, "FAIL");
+        for (String u : users) {
+            System.out.println("Checking with: " + u); // 🔥 DEBUG
+
+            String[] userData = u.split(",");
+            if (userData[0].equals(username) && userData[1].equals(password)) {
+                sendResponse(exchange, "SUCCESS");
+                return;
+            }
         }
+
+        sendResponse(exchange, "FAIL");
     }
 }
 
