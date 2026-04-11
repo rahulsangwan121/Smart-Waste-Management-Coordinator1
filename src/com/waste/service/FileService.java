@@ -58,6 +58,21 @@ public class FileService {
             }
         } catch (IOException e) { e.printStackTrace(); }
     }
+
+
+    public List<String> readUsers() {
+    List<String> users = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader("users.txt"))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            users.add(line);
+        }
+    } catch (IOException e) {
+        System.out.println("Users file not found");
+    }
+    return users;
+}
+    
     public void deleteBin(String binID) {
     List<String> allBins = readBins();
     List<String> updatedBins = new ArrayList<>();
