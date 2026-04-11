@@ -28,6 +28,24 @@ public class WebServer {
 
     // ---------------- API HANDLERS ----------------
 
+    class LoginHandler implements HttpHandler {
+    public void handle(HttpExchange exchange) throws IOException {
+        String body = readBody(exchange);
+        String[] parts = body.split(",");
+
+        String user = parts[0];
+        String pass = parts[1];
+
+        UserService userService = new UserService();
+
+        if (userService.validateUser(user, pass)) {
+            sendResponse(exchange, "SUCCESS");
+        } else {
+            sendResponse(exchange, "FAIL");
+        }
+    }
+}
+
     class BinHandler implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             List<String> bins = fileService.readBins();
