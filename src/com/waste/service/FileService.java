@@ -60,15 +60,23 @@ public class FileService {
     }
 
 
-    public List<String> readUsers() {
+   public List<String> readUsers() {
     List<String> users = new ArrayList<>();
-    try (BufferedReader br = new BufferedReader(new FileReader("users.txt"))) {
+    try {
+        File file = new File("users.txt");
+
+        System.out.println("Looking for file at: " + file.getAbsolutePath()); // 🔥
+        System.out.println("File exists: " + file.exists()); // 🔥
+
+        BufferedReader br = new BufferedReader(new FileReader(file));
         String line;
         while ((line = br.readLine()) != null) {
+            System.out.println("User line: " + line); // 🔥
             users.add(line);
         }
     } catch (IOException e) {
-        System.out.println("Users file not found");
+        System.out.println("Users file not found ERROR");
+        e.printStackTrace(); // 🔥 IMPORTANT
     }
     return users;
 }
