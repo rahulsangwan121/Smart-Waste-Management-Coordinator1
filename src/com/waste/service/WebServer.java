@@ -18,6 +18,7 @@ public class WebServer {
         server.createContext("/api/delete", new DeleteHandler());
         server.createContext("/api/reset", new ResetHandler());
         server.createContext("/api/transit", new TransitHandler());
+        server.createContext("/api/login", new LoginHandler());
 
         // ✅ Static handler (IMPORTANT)
         server.createContext("/", new StaticHandler());
