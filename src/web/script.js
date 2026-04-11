@@ -27,11 +27,11 @@ async function loadDustbins() {
                     statusText = "✅ OK";
                     actionBtn = "---";
                 } else if (level >= 80 && statusFlag === "1") {
-                    statusText = "🚨 FULL - Needs Pickup";
+                    statusText = "FULL - Needs Pickup";
                     rowClass = "critical";
-                    actionBtn = `<button class="go-btn" onclick="setTransit('${parts[0]}')">🏃 I am Going</button>`;
+                    actionBtn = `<button class="go-btn" onclick="setTransit('${parts[0]}')">Reach to bin</button>`;
                 } else if (statusFlag === "2") {
-                    statusText = "🚚 Driver is Coming...";
+                    statusText = "In Progress...";
                     rowClass = "transit";
                     actionBtn = `<button class="done-btn" onclick="resetBin('${parts[0]}')">✅ Mark Done</button>`;
                 }
