@@ -56,15 +56,32 @@ async function loadDustbins() {
 }
 
 async function setTransit(id) {
-    await fetch(`${API_BASE}/api/transit`, { method: 'POST', body: id });
+    const user = localStorage.getItem("currentUser");
+
+    await fetch(`${API_BASE}/api/transit`, {
+        method: 'POST',
+        body: `${id},${user}`
+    });
+
     loadDustbins();
 }
 
 async function resetBin(id) {
-    if(confirm("Confirm Pickup?")) {
-        await fetch(`${API_BASE}/api/reset`, { method: 'POST', body: id });
-        loadDustbins();
+    const user = localStorage.getItem("currentUser");
+
+    const res = await fetch(`${API_BASE}/api/reset`, {
+        method: 'POST',
+        body: `${id},${user}`
+    });
+
+    const result = await res.text();
+
+    if (result === "NOT_ALLOWED") {
+        alert("❌ Only assigned driver can complete this task!");
+        return;
     }
+
+    loadDustbins();
 }
 
 async function deleteBin(id) {
