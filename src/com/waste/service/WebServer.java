@@ -91,46 +91,67 @@ public class WebServer {
     }
 
     class ResetHandler implements HttpHandler {
-        public void handle(HttpExchange exchange) throws IOException {
-            String id = readBody(exchange);
+    public void handle(HttpExchange exchange) throws IOException {
+        String body = readBody(exchange);
 
-            List<String> bins = fileService.readBins();
-            List<String> updated = new ArrayList<>();
+        String[] partsBody = body.split(",");
+        String id = partsBody[0];
+        String user = partsBody[1];
 
-            for (String line : bins) {
-                String[] parts = line.split(",");
-                if (parts[0].equals(id)) {
-                    updated.add(parts[0] + "," + parts[1] + ",0,1");
-                } else {
-                    updated.add(line);
+        List<String> bins = fileService.readBins();
+        List<String> updated = new ArrayList<>();
+
+        for (String line : bins) {
+            String[] parts = line.split(",");
+
+            String assignedUser = parts.length >= 5 ? parts[4] : "";
+
+            if (parts[0].equals(id)) {
+
+                // 🔥 CHECK OWNER
+                if (!assignedUser.equals(user)) {
+                    sendResponse(exchange, "NOT_ALLOWED");
+                    return;
                 }
-            }
 
-            fileService.updateAllBins(updated);
-            sendResponse(exchange, "Reset Done");
+                updated.add(parts[0] + "," + parts[1] + ",0,1,");
+            } else {
+                updated.add(line);
+            }
         }
+
+        fileService.updateAllBins(updated);
+        sendResponse(exchange, "DONE");
     }
+}
 
     class TransitHandler implements HttpHandler {
-        public void handle(HttpExchange exchange) throws IOException {
-            String id = readBody(exchange);
+    public void handle(HttpExchange exchange) throws IOException {
+        String body = readBody(exchange);
 
-            List<String> bins = fileService.readBins();
-            List<String> updated = new ArrayList<>();
+        // id + username aa raha hoga
+        String[] partsBody = body.split(",");
+        String id = partsBody[0];
+        String user = partsBody[1];
 
-            for (String line : bins) {
-                String[] parts = line.split(",");
-                if (parts[0].equals(id)) {
-                    updated.add(parts[0] + "," + parts[1] + "," + parts[2] + ",2");
-                } else {
-                    updated.add(line);
-                }
+        List<String> bins = fileService.readBins();
+        List<String> updated = new ArrayList<>();
+
+        for (String line : bins) {
+            String[] parts = line.split(",");
+
+            if (parts[0].equals(id)) {
+                // assign user
+                updated.add(parts[0] + "," + parts[1] + "," + parts[2] + ",2," + user);
+            } else {
+                updated.add(line);
             }
-
-            fileService.updateAllBins(updated);
-            sendResponse(exchange, "Driver Assigned");
         }
+
+        fileService.updateAllBins(updated);
+        sendResponse(exchange, "Driver Assigned");
     }
+}
 
     // ---------------- STATIC HANDLER (🔥 FIX) ----------------
 
