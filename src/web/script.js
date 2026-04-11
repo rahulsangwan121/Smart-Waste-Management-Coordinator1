@@ -29,7 +29,7 @@ async function loadDustbins() {
                 let rowClass = "normal";
 
                 if (level < 80) {
-                    statusText = "✅ OK";
+                    statusText = "Ok";
                     actionBtn = "---";
                 }
                 else if (level >= 80 && statusFlag === "1") {
