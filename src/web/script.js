@@ -30,24 +30,24 @@ async function loadDustbins() {
 
                 if (level < 80) {
                     statusText = "✅ OK";
-                    actionBtn = `<button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>`;
+                   
                 }
                 else if (level >= 80 && statusFlag === "1") {
-                    statusText = "🚨 FULL - Needs Pickup";
+                    statusText = "FULL - Needs Pickup";
                     rowClass = "critical";
                     actionBtn = `
-                        <button class="go-btn" onclick="setTransit('${parts[0]}')">🏃 I am Going</button>
-                        <button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>
+                        <button class="go-btn" onclick="setTransit('${parts[0]}')">Reach</button>
+                       
                     `;
                 }
                 else if (statusFlag === "2") {
                     rowClass = "transit";
 
                     if (assignedUser === currentUser) {
-                        statusText = "🚚 You are assigned";
+                        statusText = "In Progress...";
                         actionBtn = `
-                            <button class="done-btn" onclick="resetBin('${parts[0]}')">✅ Mark Done</button>
-                            <button class="delete-btn" onclick="deleteBin('${parts[0]}')">🗑️ Delete</button>
+                            <button class="done-btn" onclick="resetBin('${parts[0]}')">Mark Done</button>
+                           
                         `;
                     } else {
                         statusText = `🚚 Assigned to ${assignedUser}`;
@@ -121,19 +121,7 @@ async function resetBin(id) {
     }
 }
 
-async function deleteBin(id) {
-    if (confirm("Delete this bin?")) {
-        await fetch(`${API_BASE}/api/delete`, {
-            method: 'POST',
-            headers: {
-                "Content-Type": "text/plain"
-            },
-            body: id
-        });
 
-        loadDustbins();
-    }
-}
 
 async function addBin() {
     const id = document.getElementById('binID').value.trim();
