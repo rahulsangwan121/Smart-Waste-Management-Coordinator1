@@ -1,4 +1,5 @@
 package com.waste.service;
+
 import java.io.*;
 import java.util.*;
 
@@ -13,14 +14,13 @@ public class FileService {
         List<String> updatedBins = new ArrayList<>();
         boolean found = false;
 
-        // Pehle purani list mein check karo ki ID exist karti hai ya nahi
         for (String line : allBins) {
             String[] parts = line.split(",");
             if (parts[0].equals(newID)) {
-                // Agar ID mil gayi, toh purani line ki jagah nayi data line daal do
-                // Agar naye data mein status nahi hai, toh default "1" laga do
                 String updatedLine = data;
-                if (newDataParts.length == 3) updatedLine += ",1";
+                if (newDataParts.length == 3) {
+                    updatedLine += ",1";
+                }
                 updatedBins.add(updatedLine);
                 found = true;
             } else {
@@ -28,14 +28,14 @@ public class FileService {
             }
         }
 
-        // Agar ID nahi mili (matlab naya bin hai), toh use list mein add kar do
         if (!found) {
             String newLine = data;
-            if (newDataParts.length == 3) newLine += ",1";
+            if (newDataParts.length == 3) {
+                newLine += ",1";
+            }
             updatedBins.add(newLine);
         }
 
-        // Ab poori updated list ko wapas file mein likh do
         updateAllBins(updatedBins);
     }
 
@@ -46,7 +46,9 @@ public class FileService {
             while ((line = br.readLine()) != null) {
                 bins.add(line);
             }
-        } catch (IOException e) { /* File doesn't exist yet */ }
+        } catch (IOException e) {
+            // File doesn't exist yet
+        }
         return bins;
     }
 
@@ -56,29 +58,30 @@ public class FileService {
                 bw.write(line);
                 bw.newLine();
             }
-        } catch (IOException e) { e.printStackTrace(); }
-    }
-
-
-   public List<String> readUsers() {
-    List<String> users = new ArrayList<>();
-    try {
-        File file = new File("users.txt");
-
-        System.out.println("Looking for file at: " + file.getAbsolutePath()); // 🔥
-        System.out.println("File exists: " + file.exists()); // 🔥
-
-        BufferedReader br = new BufferedReader(new FileReader(file));
-        String line;
-        while ((line = br.readLine()) != null) {
-            System.out.println("User line: " + line); // 🔥
-            users.add(line);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-    } catch (IOException e) {
-        System.out.println("Users file not found ERROR");
-        e.printStackTrace(); // 🔥 IMPORTANT
     }
-    return users;
+
+    public List<String> readUsers() {
+        List<String> users = new ArrayList<>();
+        try {
+            File file = new File("users.txt");
+
+            System.out.println("Looking for file at: " + file.getAbsolutePath());
+            System.out.println("File exists: " + file.exists());
+
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println("User line: " + line);
+                users.add(line);
+            }
+            br.close();
+        } catch (IOException e) {
+            System.out.println("Users file not found ERROR");
+            e.printStackTrace();
+        }
+        return users;
+    }
 }
-    
-   
