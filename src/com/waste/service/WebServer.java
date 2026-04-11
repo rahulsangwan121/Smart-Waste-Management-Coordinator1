@@ -33,24 +33,30 @@ public class WebServer {
     public void handle(HttpExchange exchange) throws IOException {
         String body = readBody(exchange);
 
-        // 🔥 DEBUG PRINT
-        System.out.println("Received from frontend: " + body);
+        System.out.println("BODY: " + body);
+
+        if (body == null || !body.contains(",")) {
+            sendResponse(exchange, "FAIL");
+            return;
+        }
 
         String[] parts = body.split(",");
-        String username = parts[0];
-        String password = parts[1];
+        String username = parts[0].trim();
+        String password = parts[1].trim();
 
-        System.out.println("Username: " + username);
-        System.out.println("Password: " + password);
+        System.out.println("USER: " + username);
+        System.out.println("PASS: " + password);
 
-        
         List<String> users = fileService.readUsers();
 
         for (String u : users) {
-            System.out.println("Checking with: " + u); // 🔥 DEBUG
+            System.out.println("FILE: " + u);
 
             String[] userData = u.split(",");
-            if (userData[0].equals(username) && userData[1].equals(password)) {
+
+            if (userData[0].trim().equals(username) &&
+                userData[1].trim().equals(password)) {
+
                 sendResponse(exchange, "SUCCESS");
                 return;
             }
